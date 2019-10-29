@@ -1,7 +1,25 @@
 import React, { Component } from 'react';
+import { Link } from 'react-router-dom';
+import PropTypes from 'prop-types';
 import api from '../../services/api';
+import Conteiner from '../../components/Container/index';
+import { Loading, Owner, IssueList } from './style';
 
 class Repository extends Component {
+  static propTypes = {
+    match: PropTypes.shape({
+      params: PropTypes.shape({
+        repository: PropTypes.string,
+      }),
+    }).isRequired,
+  };
+
+  state = {
+    repository: {},
+    issues: [],
+    loading: true,
+  };
+
   async componentDidMount() {
     const { match } = this.props;
 
@@ -21,12 +39,47 @@ class Repository extends Component {
       }),
     ]);
 
-    console.log(repository);
-    console.log(issues);
+    this.setState({
+      repository: repository.data,
+      issues: issues.data,
+      loading: false,
+    });
   }
 
   render() {
-    return <h1>Repository</h1>;
+    const { repository, issues, loading } = this.state;
+
+    if (loading) {
+      return <Loading>Carregando...</Loading>;
+    }
+
+    return (
+      <Conteiner>
+        <Owner>
+          <Link to="/">Voltar aos Reposotórios</Link>
+          <img src={repository.owner.avatar_url} alt={repository.owner.login} />
+          <h1>{repository.name}</h1>
+          <p>{repository.description}</p>
+        </Owner>
+
+        <IssueList>
+          {issues.map(issue => (
+            <li key={String(issue.id)}>
+              <img src={issue.user.avatar_url} alt={issue.user.login} />
+              <div>
+                <strong>
+                  <a href={issue.html_url}>{issue.title}</a>
+                  {issue.labels.map(label => (
+                    <span key={label.id}>{label.name}</span>
+                  ))}
+                </strong>
+                <p>{issue.user.login}</p>
+              </div>
+            </li>
+          ))}
+        </IssueList>
+      </Conteiner>
+    );
   }
 }
 
